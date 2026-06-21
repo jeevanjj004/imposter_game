@@ -1,0 +1,943 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#15101f">
+<title>Imposter Game</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg-deep:#120d1c;
+    --bg-mid:#241a3a;
+    --bg-glow:#3d2463;
+    --accent-gold:#f0b347;
+    --accent-gold-soft:#f8d28a;
+    --accent-gold-dim:rgba(240,179,71,0.18);
+    --accent-red:#e6435a;
+    --accent-red-soft:#ff8a96;
+    --accent-red-dim:rgba(230,67,90,0.18);
+    --glass-bg:rgba(255,255,255,0.055);
+    --glass-bg-strong:rgba(255,255,255,0.09);
+    --glass-border:rgba(255,255,255,0.14);
+    --text-primary:#f5f1ea;
+    --text-secondary:rgba(245,241,234,0.62);
+    --text-faint:rgba(245,241,234,0.38);
+    --display:'Bebas Neue', sans-serif;
+    --body:'Space Grotesk', sans-serif;
+    --mono:'JetBrains Mono', monospace;
+    --radius-lg:26px;
+    --radius-md:18px;
+    --radius-sm:12px;
+  }
+
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    min-height:100dvh;
+    font-family:var(--body);
+    color:var(--text-primary);
+    background:
+      radial-gradient(ellipse 80% 50% at 50% -10%, var(--bg-glow) 0%, transparent 60%),
+      linear-gradient(160deg, var(--bg-deep) 0%, var(--bg-mid) 55%, var(--bg-deep) 100%);
+    background-attachment:fixed;
+    position:relative;
+    overflow-x:hidden;
+    -webkit-tap-highlight-color:transparent;
+  }
+
+  .bg-blob{
+    position:fixed;
+    border-radius:50%;
+    filter:blur(70px);
+    opacity:0.35;
+    z-index:0;
+    pointer-events:none;
+  }
+  .bg-blob.gold{ width:260px; height:260px; background:var(--accent-gold); top:6%; right:-10%; animation:blobDrift 18s ease-in-out infinite alternate; }
+  .bg-blob.red{ width:220px; height:220px; background:var(--accent-red); bottom:4%; left:-12%; animation:blobDrift 22s ease-in-out infinite alternate-reverse; }
+
+  @keyframes blobDrift{ from{ transform:translate(0,0) scale(1);} to{ transform:translate(24px,-26px) scale(1.12);} }
+
+  .app-shell{
+    position:relative;
+    z-index:1;
+    max-width:480px;
+    margin:0 auto;
+    min-height:100dvh;
+    padding:28px 22px calc(36px + env(safe-area-inset-bottom));
+    display:flex;
+    flex-direction:column;
+  }
+
+  .screen{
+    flex:1;
+    display:flex;
+    flex-direction:column;
+  }
+
+  .screen-center{
+    justify-content:center;
+  }
+
+  .screen-enter{
+    animation:fadeUp .5s cubic-bezier(.16,1,.3,1) both;
+  }
+  @keyframes fadeUp{ from{opacity:0; transform:translateY(14px);} to{opacity:1; transform:translateY(0);} }
+
+  /* Top bar */
+  .top-bar{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    margin-bottom:22px;
+  }
+  .back-btn{
+    display:inline-flex;
+    align-items:center;
+    gap:4px;
+    background:none;
+    border:none;
+    color:var(--text-secondary);
+    font-family:var(--body);
+    font-size:14px;
+    font-weight:600;
+    padding:8px 4px;
+    cursor:pointer;
+    letter-spacing:0.02em;
+  }
+  .back-btn:hover{ color:var(--text-primary); }
+  .round-pill{
+    font-family:var(--mono);
+    font-size:11px;
+    letter-spacing:0.12em;
+    color:var(--accent-gold-soft);
+    background:var(--accent-gold-dim);
+    border:1px solid rgba(240,179,71,0.3);
+    padding:6px 12px;
+    border-radius:100px;
+    white-space:nowrap;
+  }
+
+  /* Typography */
+  .eyebrow{
+    font-family:var(--mono);
+    font-size:12px;
+    letter-spacing:0.16em;
+    color:var(--accent-gold-soft);
+    text-transform:uppercase;
+    margin:0 0 10px;
+  }
+  .eyebrow.danger{ color:var(--accent-red-soft); }
+  h1.display, h2.display, h3.display{
+    font-family:var(--display);
+    font-weight:400;
+    letter-spacing:0.02em;
+    line-height:0.95;
+    margin:0;
+  }
+  .title-hero{ font-size:64px; }
+  .title-screen{ font-size:38px; margin-bottom:8px; }
+  .title-reveal{ font-size:46px; word-break:break-word; }
+  p.subtitle{
+    color:var(--text-secondary);
+    font-size:15.5px;
+    line-height:1.5;
+    margin:0 0 0;
+  }
+  .text-center{ text-align:center; }
+
+  /* Glass surfaces */
+  .glass-card{
+    background:var(--glass-bg);
+    border:1px solid var(--glass-border);
+    border-radius:var(--radius-lg);
+    backdrop-filter:blur(20px);
+    -webkit-backdrop-filter:blur(20px);
+    padding:26px;
+  }
+
+  /* Buttons */
+  .btn{
+    font-family:var(--body);
+    border-radius:100px;
+    border:none;
+    cursor:pointer;
+    font-weight:600;
+    font-size:16px;
+    padding:18px 22px;
+    width:100%;
+    transition:transform .15s ease, box-shadow .15s ease, opacity .15s ease;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    gap:8px;
+    text-align:center;
+  }
+  .btn:active{ transform:scale(0.97); }
+  .btn-primary{
+    background:linear-gradient(135deg, var(--accent-gold-soft), var(--accent-gold));
+    color:#241405;
+    box-shadow:0 8px 24px rgba(240,179,71,0.28);
+  }
+  .btn-primary:hover{ box-shadow:0 10px 30px rgba(240,179,71,0.4); }
+  .btn-secondary{
+    background:var(--glass-bg-strong);
+    border:1px solid var(--glass-border);
+    color:var(--text-primary);
+  }
+  .btn-secondary:hover{ background:var(--glass-bg-strong); border-color:rgba(255,255,255,0.26); }
+  .btn-danger-outline{
+    background:transparent;
+    border:1px solid rgba(230,67,90,0.4);
+    color:var(--accent-red-soft);
+  }
+  .btn-text{
+    background:none;
+    border:none;
+    color:var(--text-secondary);
+    font-family:var(--body);
+    font-size:14px;
+    font-weight:600;
+    cursor:pointer;
+    padding:10px;
+    width:100%;
+  }
+  .btn-text:hover{ color:var(--text-primary); }
+  .btn-stack{ display:flex; flex-direction:column; gap:14px; }
+  .btn-sub{ display:block; font-size:12.5px; font-weight:400; opacity:0.65; margin-top:2px; }
+
+  /* Mode buttons with two lines */
+  .mode-btn{
+    flex-direction:column;
+    align-items:flex-start;
+    text-align:left;
+    padding:20px 22px;
+  }
+  .mode-btn .mode-title{ font-size:17px; font-weight:700; }
+  .mode-btn .mode-desc{ font-size:13px; font-weight:400; margin-top:4px; opacity:0.8; }
+  .mode-btn.btn-primary .mode-desc{ color:#3a2308; opacity:0.85; }
+  .mode-btn.btn-secondary .mode-desc{ color:var(--text-secondary); }
+
+  /* Hero mask icon */
+  .hero-icon{ display:flex; justify-content:center; margin-bottom:18px; }
+
+  /* Inputs */
+  .field{ margin-bottom:16px; }
+  .field label{
+    display:block;
+    font-family:var(--mono);
+    font-size:11.5px;
+    letter-spacing:0.08em;
+    text-transform:uppercase;
+    color:var(--text-faint);
+    margin-bottom:8px;
+  }
+  input[type="text"], input[type="number"]{
+    width:100%;
+    background:rgba(255,255,255,0.05);
+    border:1px solid var(--glass-border);
+    border-radius:var(--radius-sm);
+    padding:15px 16px;
+    font-family:var(--body);
+    font-size:16px;
+    color:var(--text-primary);
+    outline:none;
+    transition:border-color .15s ease, background .15s ease;
+  }
+  input::placeholder{ color:var(--text-faint); }
+  input:focus{ border-color:var(--accent-gold); background:rgba(255,255,255,0.08); }
+  input.input-error{ border-color:var(--accent-red); }
+  :focus-visible{ outline:2px solid var(--accent-gold-soft); outline-offset:3px; }
+
+  .error-text{
+    color:var(--accent-red-soft);
+    font-size:13.5px;
+    margin:-4px 0 14px;
+    font-weight:500;
+  }
+
+  /* Custom word pills */
+  .word-pill-list{ display:flex; flex-wrap:wrap; gap:8px; margin-top:18px; }
+  .word-pill{
+    display:flex; align-items:center; gap:8px;
+    background:var(--glass-bg-strong);
+    border:1px solid var(--glass-border);
+    border-radius:100px;
+    padding:8px 8px 8px 16px;
+    font-size:14px;
+  }
+  .word-pill button{
+    background:rgba(230,67,90,0.18);
+    border:none;
+    color:var(--accent-red-soft);
+    width:24px; height:24px;
+    border-radius:50%;
+    cursor:pointer;
+    font-size:14px;
+    line-height:1;
+    display:flex;align-items:center;justify-content:center;
+  }
+  .word-pill button:hover{ background:rgba(230,67,90,0.32); }
+  .empty-state{ color:var(--text-faint); font-size:14px; padding:18px 0; text-align:center; }
+  .add-word-row{ display:flex; gap:10px; }
+  .add-word-row input{ flex:1; }
+  .add-word-row .btn{ width:auto; padding:15px 22px; }
+
+  /* Role reveal card */
+  .role-card{
+    border-radius:var(--radius-lg);
+    padding:40px 26px;
+    text-align:center;
+    margin-bottom:18px;
+    border:1px solid var(--glass-border);
+    background:var(--glass-bg);
+    backdrop-filter:blur(20px);
+    -webkit-backdrop-filter:blur(20px);
+    min-height:200px;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+  }
+  .role-card.revealed{ animation:cardFlipIn .55s cubic-bezier(.2,.8,.2,1) both; }
+  @keyframes cardFlipIn{ from{ transform:rotateY(90deg) scale(.94); opacity:0;} to{ transform:rotateY(0) scale(1); opacity:1;} }
+  .role-card.normal-reveal{ border-color:rgba(240,179,71,0.4); background:linear-gradient(180deg, rgba(240,179,71,0.1), rgba(240,179,71,0.02)); }
+  .role-card.imposter-reveal{ border-color:rgba(230,67,90,0.45); background:linear-gradient(180deg, rgba(230,67,90,0.14), rgba(230,67,90,0.03)); animation:cardFlipIn .55s cubic-bezier(.2,.8,.2,1) both, pulseGlow 1.8s ease-out 0.6s infinite; }
+  @keyframes pulseGlow{ 0%,100%{ box-shadow:0 0 0 0 rgba(230,67,90,0.35);} 50%{ box-shadow:0 0 0 16px rgba(230,67,90,0);} }
+  .role-card .role-label{ font-family:var(--mono); font-size:12px; letter-spacing:0.14em; color:var(--text-faint); text-transform:uppercase; margin-bottom:14px; }
+  .role-card .role-word{ font-family:var(--display); font-size:42px; color:var(--accent-gold-soft); line-height:1.05; word-break:break-word; }
+  .role-card .role-imposter-title{ font-family:var(--display); font-size:34px; color:var(--accent-red-soft); line-height:1.05; }
+  .role-card .role-hint{ color:var(--text-secondary); font-size:14px; margin-top:14px; line-height:1.5; }
+  .pass-icon{ font-size:38px; margin-bottom:10px; opacity:0.8; }
+
+  /* Deciding / spinner screen */
+  .deciding-wrap{ display:flex; flex-direction:column; align-items:center; justify-content:center; flex:1; gap:22px; }
+  .spinner-ring{
+    width:64px; height:64px;
+    border-radius:50%;
+    border:3px solid rgba(255,255,255,0.12);
+    border-top-color:var(--accent-gold);
+    border-right-color:var(--accent-red);
+    animation:spin 0.9s linear infinite;
+  }
+  @keyframes spin{ to{ transform:rotate(360deg);} }
+  .deciding-label{ font-family:var(--mono); font-size:13px; letter-spacing:0.1em; color:var(--text-secondary); text-transform:uppercase; }
+
+  /* Modal */
+  .modal-overlay{
+    position:fixed; inset:0;
+    background:rgba(10,7,16,0.7);
+    backdrop-filter:blur(6px);
+    display:flex; align-items:center; justify-content:center;
+    z-index:50;
+    padding:24px;
+    animation:fadeIn .2s ease both;
+  }
+  @keyframes fadeIn{ from{opacity:0;} to{opacity:1;} }
+  .modal-card{
+    background:var(--bg-mid);
+    border:1px solid var(--glass-border);
+    border-radius:var(--radius-lg);
+    padding:28px;
+    max-width:360px;
+    width:100%;
+    text-align:center;
+    animation:fadeUp .25s cubic-bezier(.16,1,.3,1) both;
+  }
+  .modal-card p{ color:var(--text-primary); font-size:16px; margin:0 0 22px; line-height:1.5; }
+  .modal-actions{ display:flex; gap:12px; }
+  .modal-actions .btn{ padding:14px; font-size:15px; }
+
+  /* Result screen cards */
+  .result-card{
+    border-radius:var(--radius-lg);
+    border:1px solid var(--glass-border);
+    padding:26px;
+    text-align:center;
+    margin-bottom:14px;
+  }
+  .result-card.word{ background:linear-gradient(180deg, rgba(240,179,71,0.12), rgba(240,179,71,0.02)); border-color:rgba(240,179,71,0.35); }
+  .result-card.imposter{ background:linear-gradient(180deg, rgba(230,67,90,0.14), rgba(230,67,90,0.03)); border-color:rgba(230,67,90,0.4); }
+  .result-card .result-label{ font-family:var(--mono); font-size:11.5px; letter-spacing:0.12em; color:var(--text-faint); text-transform:uppercase; margin-bottom:10px; }
+  .result-card.word .result-value{ font-family:var(--display); font-size:38px; color:var(--accent-gold-soft); }
+  .result-card.imposter .result-value{ font-family:var(--display); font-size:38px; color:var(--accent-red-soft); }
+
+  .step-dots{ display:flex; gap:6px; justify-content:center; margin-top:16px; }
+  .step-dot{ width:7px; height:7px; border-radius:50%; background:rgba(255,255,255,0.18); }
+  .step-dot.done{ background:var(--accent-gold); }
+  .step-dot.current{ background:var(--accent-gold-soft); box-shadow:0 0 0 3px rgba(240,179,71,0.25); }
+
+  .spacer-grow{ flex:1; }
+  .footer-tag{ text-align:center; color:var(--text-faint); font-size:12.5px; margin-top:28px; font-family:var(--mono); letter-spacing:0.04em; }
+
+  @media (prefers-reduced-motion: reduce){
+    *{ animation-duration:0.01ms !important; animation-iteration-count:1 !important; transition-duration:0.01ms !important; }
+  }
+
+  @media (max-width:360px){
+    .title-hero{ font-size:54px; }
+    .role-card .role-word{ font-size:34px; }
+  }
+</style>
+</head>
+<body>
+  <div class="bg-blob gold"></div>
+  <div class="bg-blob red"></div>
+  <div class="app-shell" id="app"></div>
+
+<script>
+(function(){
+  "use strict";
+
+  var BUILTIN_WORDS = [
+    "Pen","Wedding","Football","Pizza","Doctor","Beach","Birthday Cake","Laptop",
+    "Mountain","Coffee","Airport","Bicycle","Library","Camera","Umbrella","Guitar",
+    "Hospital","Zoo","Restaurant","Movie Theater","Snow","Desert","Submarine",
+    "Castle","Robot","Pirate","Astronaut","Volcano","Waterfall","Magician"
+  ];
+
+  var STORAGE_KEY = "imposterGameCustomWords";
+
+  function loadCustomWords(){
+    try{
+      var raw = localStorage.getItem(STORAGE_KEY);
+      var parsed = raw ? JSON.parse(raw) : [];
+      return Array.isArray(parsed) ? parsed : [];
+    }catch(e){ return []; }
+  }
+
+  function saveCustomWords(){
+    try{ localStorage.setItem(STORAGE_KEY, JSON.stringify(state.customWords)); }catch(e){}
+  }
+
+  function escapeHtml(str){
+    return String(str).replace(/[&<>"']/g, function(c){
+      return ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[c];
+    });
+  }
+
+  var state = {
+    screen: 'home',
+    customWords: loadCustomWords(),
+    mode: null,
+    setup: { step:'count', count:'', names:[], error:'' },
+    players: [],
+    playerCount: 0,
+    pool: [],
+    usedWords: new Set(),
+    roundNumber: 0,
+    starterIndex: 0,
+    revealOrder: [],
+    revealStep: 0,
+    revealed: false,
+    currentWord: '',
+    imposterIndex: -1,
+    showSkipConfirm: false,
+    newWordError: '',
+    newWordValue: ''
+  };
+
+  /* ---------- Game logic ---------- */
+
+  function buildPool(){
+    if(state.mode === 'default'){
+      state.pool = BUILTIN_WORDS.concat(state.customWords);
+    } else {
+      state.pool = state.customWords.slice();
+    }
+  }
+
+  function pickWord(){
+    var available = state.pool.filter(function(w){ return !state.usedWords.has(w); });
+    if(available.length === 0){
+      state.usedWords.clear();
+      available = state.pool.slice();
+    }
+    var word = available[Math.floor(Math.random() * available.length)];
+    state.usedWords.add(word);
+    return word;
+  }
+
+  function pickImposterIndex(){
+    return Math.floor(Math.random() * state.playerCount);
+  }
+
+  function computeRevealOrder(starter){
+    var order = [];
+    for(var i=0;i<state.playerCount;i++){
+      order.push((starter + i) % state.playerCount);
+    }
+    return order;
+  }
+
+  function generateRound(){
+    state.currentWord = pickWord();
+    state.imposterIndex = pickImposterIndex();
+    state.revealOrder = computeRevealOrder(state.starterIndex);
+    state.revealStep = 0;
+    state.revealed = false;
+    showDecidingThenReveal();
+  }
+
+  function regenerateForSkip(){
+    state.currentWord = pickWord();
+    state.imposterIndex = pickImposterIndex();
+    state.revealOrder = computeRevealOrder(state.starterIndex);
+    state.revealStep = 0;
+    state.revealed = false;
+    state.screen = 'reveal';
+    render();
+  }
+
+  function showDecidingThenReveal(){
+    state.screen = 'deciding';
+    render();
+    setTimeout(function(){
+      state.screen = 'reveal';
+      render();
+    }, 1000);
+  }
+
+  /* ---------- Actions ---------- */
+
+  function goHome(){
+    state.screen = 'home';
+    state.mode = null;
+    state.players = [];
+    state.playerCount = 0;
+    state.setup = { step:'count', count:'', names:[], error:'' };
+    state.showSkipConfirm = false;
+    render();
+  }
+
+  function playDefaultMode(){
+    state.mode = 'default';
+    state.setup = { step:'count', count:'', names:[], error:'' };
+    state.screen = 'setup';
+    render();
+  }
+
+  function playCustomMode(){
+    if(state.customWords.length === 0){
+      state.screen = 'customEmptyWarning';
+      render();
+      return;
+    }
+    state.mode = 'custom';
+    state.setup = { step:'count', count:'', names:[], error:'' };
+    state.screen = 'setup';
+    render();
+  }
+
+  function manageWords(){
+    state.newWordError = '';
+    state.newWordValue = '';
+    state.screen = 'manageWords';
+    render();
+  }
+
+  function addCustomWord(){
+    var input = document.getElementById('new-word-input');
+    var val = input ? input.value.trim() : '';
+    if(!val){
+      state.newWordError = 'Enter a word first.';
+      state.newWordValue = input ? input.value : '';
+      render();
+      return;
+    }
+    var exists = state.customWords.some(function(w){ return w.toLowerCase() === val.toLowerCase(); });
+    if(exists){
+      state.newWordError = '"' + val + '" is already on your list.';
+      state.newWordValue = input.value;
+      render();
+      return;
+    }
+    state.customWords.push(val);
+    saveCustomWords();
+    state.newWordError = '';
+    state.newWordValue = '';
+    render();
+  }
+
+  function removeCustomWord(word){
+    state.customWords = state.customWords.filter(function(w){ return w !== word; });
+    saveCustomWords();
+    render();
+  }
+
+  function setupContinue(){
+    var countInput = document.getElementById('player-count-input');
+    var raw = countInput ? countInput.value : '';
+    var val = parseInt(raw, 10);
+    if(!val || isNaN(val) || val < 3){
+      state.setup.count = raw;
+      state.setup.error = 'You need at least 3 players.';
+      render();
+      return;
+    }
+    state.setup.count = val;
+    state.setup.names = new Array(val).fill('');
+    state.setup.step = 'names';
+    state.setup.error = '';
+    render();
+  }
+
+  function setupEditCount(){
+    var inputs = document.querySelectorAll('.player-name-input');
+    state.setup.names = Array.prototype.map.call(inputs, function(i){ return i.value; });
+    state.setup.step = 'count';
+    state.setup.error = '';
+    render();
+  }
+
+  function startGameClick(){
+    var inputs = document.querySelectorAll('.player-name-input');
+    var names = Array.prototype.map.call(inputs, function(i){ return i.value; });
+    state.setup.names = names;
+    var trimmed = names.map(function(n){ return n.trim(); });
+    var hasEmpty = trimmed.some(function(n){ return n === ''; });
+    if(hasEmpty){
+      state.setup.error = 'All player names are required.';
+      render();
+      return;
+    }
+    state.players = trimmed;
+    state.playerCount = trimmed.length;
+    buildPool();
+    state.usedWords = new Set();
+    state.roundNumber = 1;
+    state.starterIndex = 0;
+    generateRound();
+  }
+
+  function showRole(){
+    state.revealed = true;
+    if(navigator.vibrate){ try{ navigator.vibrate(35); }catch(e){} }
+    render();
+  }
+
+  function hideAndPass(){
+    state.revealStep++;
+    if(state.revealStep >= state.playerCount){
+      state.screen = 'discussion';
+    } else {
+      state.revealed = false;
+    }
+    render();
+  }
+
+  function skipWordClick(){
+    state.showSkipConfirm = true;
+    render();
+  }
+  function confirmSkipYes(){
+    state.showSkipConfirm = false;
+    regenerateForSkip();
+  }
+  function confirmSkipNo(){
+    state.showSkipConfirm = false;
+    render();
+  }
+
+  function revealImposterClick(){
+    state.screen = 'result';
+    render();
+  }
+
+  function nextRoundClick(){
+    state.starterIndex = (state.starterIndex + 1) % state.playerCount;
+    state.roundNumber++;
+    generateRound();
+  }
+
+  /* ---------- Templates ---------- */
+
+  function maskIconSvg(){
+    return '' +
+    '<svg width="92" height="92" viewBox="0 0 120 120" fill="none" xmlns="http://www.w3.org/2000/svg">' +
+      '<defs>' +
+        '<linearGradient id="gMask" x1="0" y1="0" x2="1" y2="1">' +
+          '<stop offset="0" stop-color="#f8d28a"/><stop offset="1" stop-color="#f0b347"/>' +
+        '</linearGradient>' +
+        '<linearGradient id="rMask" x1="0" y1="0" x2="1" y2="1">' +
+          '<stop offset="0" stop-color="#ff8a96"/><stop offset="1" stop-color="#e6435a"/>' +
+        '</linearGradient>' +
+      '</defs>' +
+      '<path d="M60 8C30 8 12 26 12 52c0 28 20 46 36 58a4 4 0 0 0 4 0c2-1.4 4-3 6-4.6V8.4C56 8.2 58 8 60 8Z" fill="url(#gMask)"/>' +
+      '<path d="M60 8c30 0 48 18 48 44 0 28-20 46-36 58a4 4 0 0 1-4 0c-2-1.4-4-3-6-4.6V8.4C64 8.2 62 8 60 8Z" fill="url(#rMask)"/>' +
+      '<ellipse cx="38" cy="50" rx="9" ry="11" fill="#15101f"/>' +
+      '<ellipse cx="82" cy="50" rx="9" ry="11" fill="#15101f"/>' +
+      '<path d="M44 78c6 6 12 9 16 9s10-3 16-9" stroke="#15101f" stroke-width="4" stroke-linecap="round" fill="none"/>' +
+    '</svg>';
+  }
+
+  function topBar(showRound){
+    var round = showRound ? '<span class="round-pill">ROUND ' + state.roundNumber + '</span>' : '<span></span>';
+    return '<div class="top-bar">' +
+      '<button class="back-btn" onclick="ImposterGame.goHome()">&#8249; Home</button>' +
+      round +
+    '</div>';
+  }
+
+  function renderHome(){
+    var wordCount = state.customWords.length;
+    return '<div class="screen screen-center screen-enter">' +
+      '<div class="hero-icon">' + maskIconSvg() + '</div>' +
+      '<div class="text-center" style="margin-bottom:36px;">' +
+        '<div class="eyebrow" style="text-align:center;">A PARTY GAME FOR GROUPS</div>' +
+        '<h1 class="display title-hero">IMPOSTER</h1>' +
+        '<p class="subtitle" style="margin-top:10px;">One word. One liar. Pass the phone and find out who.</p>' +
+      '</div>' +
+      '<div class="btn-stack">' +
+        '<button class="btn btn-primary mode-btn" onclick="ImposterGame.playDefaultMode()">' +
+          '<span class="mode-title">Play Default Mode</span>' +
+          '<span class="mode-desc">Classic word pack, plus any words you add</span>' +
+        '</button>' +
+        '<button class="btn btn-secondary mode-btn" onclick="ImposterGame.playCustomMode()">' +
+          '<span class="mode-title">Play Custom Mode</span>' +
+          '<span class="mode-desc">Only your own custom words</span>' +
+        '</button>' +
+        '<button class="btn-text" onclick="ImposterGame.manageWords()">&#9998; Manage Custom Words' + (wordCount ? ' (' + wordCount + ')' : '') + '</button>' +
+      '</div>' +
+      '<div class="footer-tag">PASS THE PHONE &middot; TRUST NO ONE</div>' +
+    '</div>';
+  }
+
+  function renderManageWords(){
+    var listHtml;
+    if(state.customWords.length === 0){
+      listHtml = '<div class="empty-state">No custom words yet. Add your first one below.</div>';
+    } else {
+      listHtml = '<div class="word-pill-list">' + state.customWords.map(function(w){
+        return '<div class="word-pill"><span>' + escapeHtml(w) + '</span>' +
+          '<button class="remove-word-btn" data-word="' + escapeHtml(w) + '" aria-label="Remove ' + escapeHtml(w) + '">&times;</button></div>';
+      }).join('') + '</div>';
+    }
+    return '<div class="screen screen-enter">' +
+      topBar(false) +
+      '<h2 class="display title-screen">Custom Words</h2>' +
+      '<p class="subtitle" style="margin-bottom:22px;">Saved on this device. Used in Default and Custom modes.</p>' +
+      '<div class="glass-card">' +
+        '<div class="add-word-row">' +
+          '<input type="text" id="new-word-input" placeholder="e.g. Messi" value="' + escapeHtml(state.newWordValue || '') + '" onkeydown="if(event.key===\'Enter\'){ImposterGame.addCustomWord();}">' +
+          '<button class="btn btn-primary" style="width:auto;" onclick="ImposterGame.addCustomWord()">Add</button>' +
+        '</div>' +
+        (state.newWordError ? '<div class="error-text" style="margin-top:10px;">' + escapeHtml(state.newWordError) + '</div>' : '') +
+        listHtml +
+      '</div>' +
+    '</div>';
+  }
+
+  function renderCustomEmptyWarning(){
+    return '<div class="screen screen-center screen-enter text-center">' +
+      '<div class="eyebrow" style="text-align:center;">CUSTOM MODE</div>' +
+      '<h2 class="display title-screen">No custom words yet</h2>' +
+      '<p class="subtitle" style="margin-bottom:30px;">Add at least one word to play Custom Mode. Only your own words are used here &mdash; no built-ins.</p>' +
+      '<div class="btn-stack">' +
+        '<button class="btn btn-primary" onclick="ImposterGame.manageWords()">Add Custom Words</button>' +
+        '<button class="btn btn-secondary" onclick="ImposterGame.goHome()">&#8249; Back to Home</button>' +
+      '</div>' +
+    '</div>';
+  }
+
+  function renderSetup(){
+    var modeLabel = state.mode === 'default' ? 'DEFAULT MODE' : 'CUSTOM MODE';
+    var inner = '';
+    if(state.setup.step === 'count'){
+      inner =
+        '<div class="field">' +
+          '<label for="player-count-input">How many players are passing the phone tonight?</label>' +
+          '<input type="number" id="player-count-input" min="3" inputmode="numeric" placeholder="Minimum 3" value="' + escapeHtml(state.setup.count || '') + '" onkeydown="if(event.key===\'Enter\'){ImposterGame.setupContinue();}">' +
+        '</div>' +
+        (state.setup.error ? '<div class="error-text">' + escapeHtml(state.setup.error) + '</div>' : '') +
+        '<button class="btn btn-primary" onclick="ImposterGame.setupContinue()">Continue</button>';
+    } else {
+      var fields = '';
+      for(var i=0;i<state.setup.count;i++){
+        fields += '<div class="field">' +
+          '<label>Player ' + (i+1) + ' Name</label>' +
+          '<input type="text" class="player-name-input' + (state.setup.error ? ' input-error' : '') + '" data-index="' + i + '" placeholder="Player ' + (i+1) + ' Name" value="' + escapeHtml((state.setup.names && state.setup.names[i]) || '') + '">' +
+        '</div>';
+      }
+      inner = fields +
+        (state.setup.error ? '<div class="error-text">' + escapeHtml(state.setup.error) + '</div>' : '') +
+        '<div class="btn-stack">' +
+          '<button class="btn btn-primary" onclick="ImposterGame.startGameClick()">Start Game</button>' +
+          '<button class="btn-text" onclick="ImposterGame.setupEditCount()">Edit Player Count</button>' +
+        '</div>';
+    }
+    return '<div class="screen screen-enter">' +
+      topBar(false) +
+      '<div class="eyebrow">' + modeLabel + '</div>' +
+      '<h2 class="display title-screen">Player Setup</h2>' +
+      '<div style="margin-top:18px;">' + inner + '</div>' +
+    '</div>';
+  }
+
+  function renderDeciding(){
+    return '<div class="screen screen-enter">' +
+      topBar(true) +
+      '<div class="deciding-wrap">' +
+        '<div class="spinner-ring"></div>' +
+        '<div class="deciding-label">Choosing the imposter&hellip;</div>' +
+      '</div>' +
+    '</div>';
+  }
+
+  function renderRevealFull(){
+    var idx = state.revealOrder[state.revealStep];
+    var name = state.players[idx];
+    var isImposter = idx === state.imposterIndex;
+    var dots = '';
+    for(var i=0;i<state.playerCount;i++){
+      var cls = 'step-dot';
+      if(i < state.revealStep) cls += ' done';
+      if(i === state.revealStep) cls += ' current';
+      dots += '<div class="' + cls + '"></div>';
+    }
+
+    var cardHtml, bottomBtns;
+    if(!state.revealed){
+      cardHtml = '<div class="role-card">' +
+        '<div class="pass-icon">&#128241;</div>' +
+        '<div class="role-label">Player ' + (state.revealStep+1) + ' of ' + state.playerCount + '</div>' +
+        '<h2 class="display title-reveal">Pass to ' + escapeHtml(name) + '</h2>' +
+        '<p class="role-hint">Make sure no one else can see the screen.</p>' +
+      '</div>';
+      bottomBtns = '<button class="btn btn-primary" onclick="ImposterGame.showRole()">Show My Role</button>';
+    } else if(isImposter){
+      cardHtml = '<div class="role-card imposter-reveal revealed">' +
+        '<div class="role-label">' + escapeHtml(name) + '</div>' +
+        '<h2 class="role-imposter-title">YOU ARE THE IMPOSTER</h2>' +
+        '<p class="role-hint">Blend in. Try to guess the word before they catch you.</p>' +
+      '</div>';
+      bottomBtns =
+        '<button class="btn-text" onclick="ImposterGame.skipWordClick()">Don&rsquo;t like this word? Skip it</button>' +
+        '<button class="btn btn-primary" onclick="ImposterGame.hideAndPass()">Hide &amp; Pass Phone</button>';
+    } else {
+      cardHtml = '<div class="role-card normal-reveal revealed">' +
+        '<div class="role-label">' + escapeHtml(name) + '</div>' +
+        '<div class="role-label" style="margin-top:6px;">THE SECRET WORD IS</div>' +
+        '<div class="role-word">' + escapeHtml(state.currentWord) + '</div>' +
+        '<p class="role-hint">Don&rsquo;t say it out loud.</p>' +
+      '</div>';
+      bottomBtns =
+        '<button class="btn-text" onclick="ImposterGame.skipWordClick()">Don&rsquo;t like this word? Skip it</button>' +
+        '<button class="btn btn-primary" onclick="ImposterGame.hideAndPass()">Hide &amp; Pass Phone</button>';
+    }
+
+    var modal = '';
+    if(state.showSkipConfirm){
+      modal = '<div class="modal-overlay">' +
+        '<div class="modal-card">' +
+          '<p>Skip this word and restart the round?</p>' +
+          '<div class="modal-actions">' +
+            '<button class="btn btn-secondary" onclick="ImposterGame.confirmSkipNo()">No</button>' +
+            '<button class="btn btn-primary" onclick="ImposterGame.confirmSkipYes()">Yes</button>' +
+          '</div>' +
+        '</div>' +
+      '</div>';
+    }
+
+    return '<div class="screen screen-enter">' +
+      topBar(true) +
+      cardHtml +
+      '<div class="step-dots">' + dots + '</div>' +
+      '<div class="spacer-grow"></div>' +
+      '<div class="btn-stack" style="margin-top:18px;">' + bottomBtns + '</div>' +
+    '</div>' + modal;
+  }
+
+  function renderDiscussion(){
+    return '<div class="screen screen-center screen-enter text-center">' +
+      topBar(true) +
+      '<div style="flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center;">' +
+        '<div class="eyebrow" style="text-align:center;">EVERYONE HAS SEEN THEIR ROLE</div>' +
+        '<h2 class="display" style="font-size:46px;">Discussion Time</h2>' +
+        '<p class="subtitle" style="margin-top:10px; margin-bottom:34px;">Talk it through. Who doesn&rsquo;t know the word?</p>' +
+        '<button class="btn btn-primary" onclick="ImposterGame.revealImposterClick()" style="width:100%;">Reveal Imposter</button>' +
+      '</div>' +
+    '</div>';
+  }
+
+  function renderResult(){
+    var imposterName = state.players[state.imposterIndex];
+    return '<div class="screen screen-enter">' +
+      topBar(true) +
+      '<div class="eyebrow" style="text-align:center;">ROUND ' + state.roundNumber + ' RESULT</div>' +
+      '<div class="result-card word">' +
+        '<div class="result-label">The word was</div>' +
+        '<div class="result-value">' + escapeHtml(state.currentWord) + '</div>' +
+      '</div>' +
+      '<div class="result-card imposter">' +
+        '<div class="result-label">The imposter was</div>' +
+        '<div class="result-value">' + escapeHtml(imposterName) + '</div>' +
+      '</div>' +
+      '<div class="spacer-grow"></div>' +
+      '<div class="btn-stack" style="margin-top:18px;">' +
+        '<button class="btn btn-primary" onclick="ImposterGame.nextRoundClick()">Next Round</button>' +
+        '<button class="btn-text" onclick="ImposterGame.goHome()">&#8249; Back to Home</button>' +
+      '</div>' +
+    '</div>';
+  }
+
+  /* ---------- Render dispatcher ---------- */
+
+  function render(){
+    var app = document.getElementById('app');
+    var html;
+    switch(state.screen){
+      case 'home': html = renderHome(); break;
+      case 'manageWords': html = renderManageWords(); break;
+      case 'customEmptyWarning': html = renderCustomEmptyWarning(); break;
+      case 'setup': html = renderSetup(); break;
+      case 'deciding': html = renderDeciding(); break;
+      case 'reveal': html = renderRevealFull(); break;
+      case 'discussion': html = renderDiscussion(); break;
+      case 'result': html = renderResult(); break;
+      default: html = renderHome();
+    }
+    app.innerHTML = html;
+    if(state.screen === 'setup' && state.setup.step === 'count'){
+      var ci = document.getElementById('player-count-input');
+      if(ci) ci.focus();
+    }
+    if(state.screen === 'manageWords'){
+      var nw = document.getElementById('new-word-input');
+      if(nw && state.newWordError) nw.focus();
+    }
+  }
+
+  document.getElementById('app').addEventListener('click', function(e){
+    var btn = e.target.closest('.remove-word-btn');
+    if(btn){ removeCustomWord(btn.getAttribute('data-word')); }
+  });
+
+  /* ---------- Expose API ---------- */
+  window.ImposterGame = {
+    goHome: goHome,
+    playDefaultMode: playDefaultMode,
+    playCustomMode: playCustomMode,
+    manageWords: manageWords,
+    addCustomWord: addCustomWord,
+    removeCustomWord: removeCustomWord,
+    setupContinue: setupContinue,
+    setupEditCount: setupEditCount,
+    startGameClick: startGameClick,
+    showRole: showRole,
+    hideAndPass: hideAndPass,
+    skipWordClick: skipWordClick,
+    confirmSkipYes: confirmSkipYes,
+    confirmSkipNo: confirmSkipNo,
+    revealImposterClick: revealImposterClick,
+    nextRoundClick: nextRoundClick
+  };
+
+  render();
+})();
+</script>
+</body>
+</html>
