@@ -128,15 +128,13 @@
   .role-card.revealed{animation:cardFlipIn .55s cubic-bezier(.2,.8,.2,1) both;}
   @keyframes cardFlipIn{from{transform:rotateY(90deg) scale(.94);opacity:0;}to{transform:rotateY(0) scale(1);opacity:1;}}
   .role-card.normal-reveal{border-color:rgba(240,179,71,0.4);background:linear-gradient(180deg,rgba(240,179,71,0.1),rgba(240,179,71,0.02));}
-  .role-card.imposter-reveal{border-color:rgba(230,67,90,0.45);background:linear-gradient(180deg,rgba(230,67,90,0.14),rgba(230,67,90,0.03));animation:cardFlipIn .55s cubic-bezier(.2,.8,.2,1) both,pulseGlow 1.8s ease-out 0.6s infinite;}
-  .role-card.similar-reveal{border-color:rgba(63,216,200,0.45);background:linear-gradient(180deg,rgba(63,216,200,0.12),rgba(63,216,200,0.02));animation:cardFlipIn .55s cubic-bezier(.2,.8,.2,1) both,pulseGlowTeal 1.8s ease-out 0.6s infinite;}
-  @keyframes pulseGlow{0%,100%{box-shadow:0 0 0 0 rgba(230,67,90,0.35);}50%{box-shadow:0 0 0 16px rgba(230,67,90,0);}}
-  @keyframes pulseGlowTeal{0%,100%{box-shadow:0 0 0 0 rgba(63,216,200,0.3);}50%{box-shadow:0 0 0 16px rgba(63,216,200,0);}}
+  .role-card.imposter-reveal{border-color:rgba(240,179,71,0.4);background:linear-gradient(180deg,rgba(240,179,71,0.1),rgba(240,179,71,0.02));animation:cardFlipIn .55s cubic-bezier(.2,.8,.2,1) both;}
+  .role-card.similar-reveal{border-color:rgba(240,179,71,0.4);background:linear-gradient(180deg,rgba(240,179,71,0.1),rgba(240,179,71,0.02));animation:cardFlipIn .55s cubic-bezier(.2,.8,.2,1) both;}
   .role-card .role-label{font-family:var(--mono);font-size:12px;letter-spacing:0.14em;color:var(--text-faint);text-transform:uppercase;margin-bottom:14px;}
   .role-card .role-word{font-family:var(--display);font-size:42px;color:var(--accent-gold-soft);line-height:1.05;word-break:break-word;}
-  .role-card .role-word.teal{color:var(--accent-teal-soft);}
-  .role-card .role-imposter-title{font-family:var(--display);font-size:34px;color:var(--accent-red-soft);line-height:1.05;}
-  .role-card .role-similar-title{font-family:var(--display);font-size:28px;color:var(--accent-teal-soft);line-height:1.05;margin-top:14px;}
+  .role-card .role-word.teal{color:var(--accent-gold-soft);}
+  .role-card .role-imposter-title{font-family:var(--display);font-size:34px;color:var(--accent-gold-soft);line-height:1.05;}
+  .role-card .role-similar-title{font-family:var(--display);font-size:28px;color:var(--accent-gold-soft);line-height:1.05;margin-top:14px;}
   .role-card .role-hint{color:var(--text-secondary);font-size:14px;margin-top:14px;line-height:1.5;}
   .pass-icon{font-size:38px;margin-bottom:10px;opacity:0.8;}
   .deciding-wrap{display:flex;flex-direction:column;align-items:center;justify-content:center;flex:1;gap:22px;}
@@ -655,12 +653,12 @@
       cardHtml = '<div class="role-card similar-reveal revealed">' +
         '<div class="role-label">'+escapeHtml(name)+' &mdash; YOUR WORD IS</div>' +
         '<div class="role-word teal">'+escapeHtml(state.currentDecoy)+'</div>' +
-        '<div class="role-similar-title">YOU ARE THE IMPOSTER</div>' +
+        '<div class="role-similar-title"></div>' +
         '<p class="role-hint">Your word is close but different. Blend in &mdash; don\'t get caught!</p>' +
       '</div>';
       bottomBtns =
         '<button class="btn-text" onclick="IG.skipWordClick()">Don&rsquo;t like this word? Skip it</button>' +
-        '<button class="btn btn-teal" onclick="IG.hideAndPass()">Hide &amp; Pass Phone</button>';
+        '<button class="btn btn-primary" onclick="IG.hideAndPass()">Hide &amp; Pass Phone</button>';
     } else if(isImposter){
       cardHtml = '<div class="role-card imposter-reveal revealed">' +
         '<div class="role-label">'+escapeHtml(name)+'</div>' +
